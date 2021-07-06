@@ -5,36 +5,30 @@ canvas.height = window.innerHeight;
 
 let gameData = {
   squares: [],
-  currentSquare: null,
+  currentSquare: [0, 0],
+  hoverSquare: null,
+
+  player: {
+    oldSquare: [],
+    pos: {
+      x: 0,
+      y: 0,
+    },
+    movingArr: [],
+  },
 
   floorColor: "#567d46",
   playerColor: "#131ab1",
 };
 
-window.addEventListener("resize", () => {
-  draw();
-});
-
 canvas.addEventListener("mousemove", (evt) => {
   gameData.squares.forEach((squareInner) => {
-    squareInner.forEach((currentSquare) => {
+    squareInner.forEach((squareSelected) => {
       if (
-        ctx.isPointInPath(currentSquare.path, evt.offsetX, evt.offsetY) &&
-        !currentSquare.content
+        ctx.isPointInPath(squareSelected.path, evt.offsetX, evt.offsetY) &&
+        !squareSelected.content
       ) {
-        draw();
-
-        ctx.strokeStyle = shadeColor("#ffffff", -12);
-        ctx.stroke(currentSquare.path);
-
-        drawCube(
-          gameData.currentSquare.posPx.x,
-          gameData.currentSquare.posPx.y - 3,
-          Number(20),
-          Number(20),
-          Number(50 + 50 * 0.1),
-          gameData.playerColor
-        );
+        gameData.hoverSquare = squareSelected.posMatrix;
       }
     });
   });
@@ -45,13 +39,11 @@ canvas.addEventListener("click", (evt) => {
     innerSquare.forEach((specificSquare, j) => {
       if (
         ctx.isPointInPath(specificSquare.path, evt.offsetX, evt.offsetY) &&
-        gameData.currentSquare.id != specificSquare.id
+        getSquareData(gameData.currentSquare).id != specificSquare.id
       ) {
-        pathFinding(gameData.currentSquare, [i, j]);
+        pathFinding([i, j]);
 
-        gameData.currentSquare = specificSquare;
-
-        draw();
+        gameData.currentSquare = specificSquare.posMatrix;
       }
     });
   });
@@ -95,54 +87,92 @@ function draw() {
             content: null,
           };
 
-          if (!gameData.currentSquare) {
-            gameData.currentSquare = squareData;
-          }
-
           gameData.squares[i][j] = squareData;
 
-          const posX = squareData.posPx.x;
-          const posY = squareData.posPx.y;
-          const path = squareData.path;
-
           drawLine(
-            posX,
-            posY,
+            squareData.posPx.x,
+            squareData.posPx.y,
             Number(20),
             Number(20),
             shadeColor(gameData.floorColor, 20),
-            path
+            squareData.path
           );
         });
     });
+  if (gameData.hoverSquare) {
+    drawLine(
+      getSquareData(gameData.hoverSquare).posPx.x,
+      getSquareData(gameData.hoverSquare).posPx.y,
+      Number(20),
+      Number(20),
+      shadeColor("#ffffff", -12),
+      getSquareData(gameData.hoverSquare).path
+    );
+  }
 
   //player
-  drawCube(
-    gameData.currentSquare.posPx.x,
-    gameData.currentSquare.posPx.y - 3,
-    Number(20),
-    Number(20),
-    Number(50 + 50 * 0.1),
-    gameData.playerColor
-  );
+  if (gameData.player.movingArr.length > 0) {
+    if (
+      gameData.player.pos.x === gameData.player.movingArr[0].to.x &&
+      gameData.player.pos.y === gameData.player.movingArr[0].to.y
+    ) {
+      gameData.player.movingArr.shift();
+    }
+
+    if (gameData.player.movingArr.length > 0) {
+      gameData.currentSquare = gameData.player.movingArr[0].posMatrix;
+
+      if (
+        gameData.player.pos.x < gameData.player.movingArr[0].to.x &&
+        gameData.player.movingArr[0].isMovingPositive.x
+      ) {
+        gameData.player.pos.x += 1;
+      }
+
+      if (
+        gameData.player.pos.x > gameData.player.movingArr[0].to.x &&
+        !gameData.player.movingArr[0].isMovingPositive.x
+      ) {
+        gameData.player.pos.x -= 1;
+      }
+
+      if (
+        gameData.player.pos.y < gameData.player.movingArr[0].to.y &&
+        gameData.player.movingArr[0].isMovingPositive.y
+      ) {
+        gameData.player.pos.y += 0.5;
+      }
+
+      if (
+        gameData.player.pos.y > gameData.player.movingArr[0].to.y &&
+        !gameData.player.movingArr[0].isMovingPositive.y
+      ) {
+        gameData.player.pos.y -= 0.5;
+      }
+    }
+
+    drawCube(
+      gameData.player.pos.x,
+      gameData.player.pos.y - 3,
+      Number(20),
+      Number(20),
+      Number(50 + 50 * 0.1),
+      gameData.playerColor
+    );
+  } else {
+    gameData.player.pos.x = getSquareData(gameData.currentSquare).posPx.x;
+    gameData.player.pos.y = getSquareData(gameData.currentSquare).posPx.y;
+
+    drawCube(
+      getSquareData(gameData.currentSquare).posPx.x,
+      getSquareData(gameData.currentSquare).posPx.y - 3,
+      Number(20),
+      Number(20),
+      Number(50 + 50 * 0.1),
+      gameData.playerColor
+    );
+  }
+
+  window.requestAnimationFrame(draw);
 }
-
 draw();
-
-// const element = document.getElementById('some-element-you-want-to-animate');
-// let start;
-
-// function step(timestamp) {
-//   if (start === undefined)
-//     start = timestamp;
-//   const elapsed = timestamp - start;
-
-//   // `Math.min()` is used here to make sure that the element stops at exactly 200px.
-//   element.style.transform = 'translateX(' + Math.min(0.1 * elapsed, 200) + 'px)';
-
-//   if (elapsed < 2000) { // Stop the animation after 2 seconds
-//     window.requestAnimationFrame(step);
-//   }
-// }
-
-// window.requestAnimationFrame(step);

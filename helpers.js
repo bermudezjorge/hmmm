@@ -1,3 +1,7 @@
+function getSquareData(pos) {
+  return gameData.squares[pos[0]][pos[1]];
+}
+
 function shadeColor(color, percent) {
   color = color.substr(1);
   var num = parseInt(color, 16),
@@ -64,18 +68,85 @@ function drawLine(x, y, wx, wy, color, path) {
   ctx.stroke(path);
 }
 
-function pathFinding(oldPos, newPos) {
-  let path = [];
+function pathFinding(newPos) {
+  const squaresData = gameData.squares.map((innerSquares) =>
+    innerSquares.map((square) => (square.content ? 0 : 1))
+  );
 
-  console.log(oldPos, newPos);
+  var graph = new Graph(squaresData, { diagonal: true });
+  const oldPos = getSquareData(gameData.currentSquare).posMatrix;
 
-  // for (let i = 0; i < gameData.squares.length - 1; i++) {
-  //   for (let j = 0; j < gameData.squares[i].length - 1; j++) {
-  //     if(newPos[0] > oldPos.posMatrix[0]) {
-  //       break;
-  //     } else {
+  var start = graph.grid[oldPos[0]][oldPos[1]];
+  var end = graph.grid[newPos[0]][newPos[1]];
 
-  //     }
-  //   }
-  // }
+  // result is an array containing the shortest path
+  var result = astar.search(graph, start, end, {
+    heuristic: astar.heuristics.diagonal,
+  });
+
+  moveCharToPos(result);
 }
+
+function moveCharToPos(positions) {
+  const startingPos = [positions[0].parent.x, positions[0].parent.y];
+
+  const positionsInSpace = [
+    getSquareData(startingPos).posPx,
+    ...positions.map((pos) => getSquareData([pos.x, pos.y]).posPx),
+  ];
+  const positionsInSpaceLength = positionsInSpace.length - 1;
+
+  gameData.player.movingArr = [];
+
+  for (let i = 1; i <= positionsInSpaceLength; i++) {
+    const isXPositive = positionsInSpace[i - 1].x < positionsInSpace[i].x;
+    const isYPositive = positionsInSpace[i - 1].y < positionsInSpace[i].y;
+
+    const movingData = {
+      posMatrix: [positions[i - 1].x, positions[i - 1].y],
+      isMovingPositive: {
+        x: isXPositive,
+        y: isYPositive,
+      },
+      to: {
+        x: positionsInSpace[i].x,
+        y: positionsInSpace[i].y,
+      },
+    };
+
+    gameData.player.movingArr.push(movingData);
+  }
+}
+
+// var graphDiagonal = new Graph(
+//   [
+//     [1, 1, 1, 1],
+//     [0, 1, 1, 0],
+//     [0, 0, 1, 1],
+//   ],
+// { diagonal: true }
+// );
+
+// var start = graphDiagonal.grid[0][0];
+// var end = graphDiagonal.grid[1][2];
+// var resultWithDiagonals = astar.search(graphDiagonal, start, end, {
+//   heuristic: astar.heuristics.diagonal,
+// });
+
+// console.log(resultWithDiagonals);
+
+// // Weight can easily be added by increasing the values within the graph, and where 0 is infinite (a wall)
+// var graphWithWeight = new Graph([
+//   [1, 1, 4, 30],
+//   [0, 1, 1.3, 0],
+//   [0, 0, 5, 1],
+// ]);
+// var startWithWeight = graphWithWeight.grid[0][0];
+// var endWithWeight = graphWithWeight.grid[1][2];
+// var resultWithWeight = astar.search(
+//   graphWithWeight,
+//   startWithWeight,
+//   endWithWeight
+// );
+
+// console.log(resultWithWeight);
