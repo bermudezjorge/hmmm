@@ -126,28 +126,28 @@ function draw() {
         gameData.player.pos.x < gameData.player.movingArr[0].to.x &&
         gameData.player.movingArr[0].isMovingPositive.x
       ) {
-        gameData.player.pos.x += 1;
+        gameData.player.pos.x += Math.min(2, gameData.player.movingArr[0].to.x);
       }
 
       if (
         gameData.player.pos.x > gameData.player.movingArr[0].to.x &&
         !gameData.player.movingArr[0].isMovingPositive.x
       ) {
-        gameData.player.pos.x -= 1;
+        gameData.player.pos.x -= Math.min(2, gameData.player.movingArr[0].to.x);
       }
 
       if (
         gameData.player.pos.y < gameData.player.movingArr[0].to.y &&
         gameData.player.movingArr[0].isMovingPositive.y
       ) {
-        gameData.player.pos.y += 0.5;
+        gameData.player.pos.y += Math.min(1, gameData.player.movingArr[0].to.y);
       }
 
       if (
         gameData.player.pos.y > gameData.player.movingArr[0].to.y &&
         !gameData.player.movingArr[0].isMovingPositive.y
       ) {
-        gameData.player.pos.y -= 0.5;
+        gameData.player.pos.y -= Math.min(1, gameData.player.movingArr[0].to.y);
       }
     }
 
