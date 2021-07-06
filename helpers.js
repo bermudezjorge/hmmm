@@ -96,7 +96,12 @@ function moveCharToPos(positions) {
   ];
   const positionsInSpaceLength = positionsInSpace.length - 1;
 
-  gameData.player.movingArr = [];
+  console.log(gameData.player.movingArr, gameData.player.movingArr.length);
+  if (gameData.player.movingArr.length > 0) {
+    gameData.player.movingArr = [gameData.player.movingArr[0]];
+  }
+
+  console.log(gameData.player.movingArr);
 
   for (let i = 1; i <= positionsInSpaceLength; i++) {
     const isXPositive = positionsInSpace[i - 1].x < positionsInSpace[i].x;
